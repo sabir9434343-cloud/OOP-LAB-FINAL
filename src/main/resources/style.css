@@ -1,0 +1,67 @@
+/* ============================================================
+   SmartScrabble – dark theme stylesheet
+   All -fx- inline styles from ScrabbleController live here.
+   ============================================================ */
+
+/* Root background */
+.root-pane {
+    -fx-background-color: #1b1f24;
+}
+
+/* ---- Board squares ---- */
+.board-square {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #3a3f44;
+}
+
+.board-square-tw {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #c0392b;
+}
+
+.board-square-dw {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #e08283;
+}
+
+.board-square-tl {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #2471a3;
+}
+
+.board-square-dl {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #85c1e9;
+}
+
+.board-square-center {
+    -fx-font-size: 9px;
+    -fx-text-fill: white;
+    -fx-background-color: #e08283;
+}
+
+/* A board square that has a tile placed on it */
+.board-tile {
+    -fx-background-color: #e8d9a0;
+    -fx-text-fill: #1b1f24;
+    -fx-font-weight: bold;
+}
+
+/* ---- Rack tiles ---- */
+.rack-tile {
+    -fx-background-color: #e8d9a0;
+    -fx-font-weight: bold;
+}
+
+/* Rack tile that is currently selected by the player */
+.rack-tile-selected {
+    -fx-background-color: #e8d9a0;
+    -fx-font-weight: bold;
+    -fx-border-color: #5dd6c0;
+    -fx-border-width: 3;
+}

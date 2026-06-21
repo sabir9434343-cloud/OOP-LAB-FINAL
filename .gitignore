@@ -1,0 +1,16 @@
+# Compiled output
+target/
+
+# Bundled Maven binary (too large for GitHub, downloads automatically on first run)
+.mvn/wrapper/apache-maven-*/
+
+# Game save file (runtime data, not source)
+scrabble_save.dat
+
+# OS / IDE junk
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+.vscode/
+*.class
