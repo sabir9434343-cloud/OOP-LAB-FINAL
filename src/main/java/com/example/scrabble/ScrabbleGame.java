@@ -14,23 +14,18 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.util.*;
 
-// SmartScrabble | Sabir Ali 73971 | BS(AI) Iqra University
-
-// ── INTERFACES (Week 9) ──────────────────────────────────────────────────────
 interface Scorable    { int     getScoreValue(); }
 interface Validatable { boolean isValid(); }
 
-// ── EXCEPTIONS (Week 10) ─────────────────────────────────────────────────────
 class InvalidWordException      extends Exception { InvalidWordException(String m)      { super(m); } }
 class InvalidPlacementException extends Exception { InvalidPlacementException(String m) { super(m); } }
 
-// ── TILE  (encapsulation, 4 constructor types, Validatable) ──────────────────
 class Tile implements Serializable, Validatable {
     private char letter; private int value; private boolean blank;
     Tile()                             { this(' ', 0, true); }
     Tile(char l, int v)                { this(l, v, false); }
     Tile(char l, int v, boolean blank) { letter=l; value=v; this.blank=blank; }
-    Tile(Tile o)                       { this(o.letter, o.value, o.blank); }   // copy ctor
+    Tile(Tile o)                       { this(o.letter, o.value, o.blank); }
 
     char    getLetter()          { return letter; }
     void    setLetter(char l)    { letter = l; }
@@ -41,7 +36,6 @@ class Tile implements Serializable, Validatable {
     @Override public String  toString() { return blank?"["+letter+"*]":"["+letter+":"+value+"]"; }
 }
 
-// ── ABSTRACT SQUARE (Week 9: abstract class, Week 7: runtime polymorphism) ───
 abstract class Square implements Serializable, Scorable {
     protected Tile tile; protected final int row, col;
     Square(int r, int c) { row=r; col=c; }
@@ -56,7 +50,6 @@ abstract class Square implements Serializable, Scorable {
     @Override public int getScoreValue() { return tile==null?0:tile.getValue()*getLetterMultiplier(); }
 }
 
-// NormalSquare – level 1 subclass (Week 6: inheritance, super)
 class NormalSquare extends Square {
     NormalSquare(int r, int c) { super(r,c); }
     @Override public int    getLetterMultiplier() { return 1; }
@@ -64,13 +57,12 @@ class NormalSquare extends Square {
     @Override public String getLabel()            { return ""; }
 }
 
-// PremiumSquare – level 1 subclass
 class PremiumSquare extends Square {
     enum BonusType { DOUBLE_LETTER, TRIPLE_LETTER, DOUBLE_WORD, TRIPLE_WORD, CENTER_STAR }
     protected final BonusType bonus; private boolean used;
     PremiumSquare(int r, int c, BonusType b) { super(r,c); bonus=b; }
     BonusType getBonusType() { return bonus; }
-    @Override public void placeTile(Tile t) { super.placeTile(t); used=true; }  // super keyword
+    @Override public void placeTile(Tile t) { super.placeTile(t); used=true; }
     @Override public int getLetterMultiplier() {
         if (used) return 1;
         return switch(bonus){ case DOUBLE_LETTER->2; case TRIPLE_LETTER->3; default->1; };
@@ -84,13 +76,11 @@ class PremiumSquare extends Square {
     }
 }
 
-// CenterSquare – level 2 subclass → MULTILEVEL HIERARCHY (Week 6)
 class CenterSquare extends PremiumSquare {
     CenterSquare(int r, int c) { super(r, c, BonusType.CENTER_STAR); }
     @Override public String getLabel() { return "★"; }
 }
 
-// ── BOARD (composition, static constant, 2D array) ───────────────────────────
 class Board implements Serializable {
     static final int SIZE = 15;
     private final Square[][] grid = new Square[SIZE][SIZE];
@@ -114,18 +104,16 @@ class Board implements Serializable {
     }
 }
 
-// ── TILE BAG (static vs instance, Collections) ───────────────────────────────
 class TileBag implements Serializable {
-    private static int totalEverCreated = 0;          // static – shared across instances
+    private static int totalEverCreated = 0;
     private final List<Tile> tiles = new ArrayList<>();
     TileBag() {
-        // {count, value} for A..Z
         int[][] dist = {{9,1},{2,3},{2,3},{4,2},{12,1},{2,4},{3,2},{2,4},{9,1},{1,8},
                         {1,5},{4,1},{2,3},{6,1},{8,1},{2,3},{1,10},{6,1},{4,1},{6,1},
                         {4,1},{2,4},{2,4},{1,8},{2,4},{1,10}};
         for (int i=0;i<26;i++)
             for (int j=0;j<dist[i][0];j++) { tiles.add(new Tile((char)('A'+i),dist[i][1])); totalEverCreated++; }
-        for (int i=0;i<2;i++) { tiles.add(new Tile()); totalEverCreated++; }  // 2 blanks
+        for (int i=0;i<2;i++) { tiles.add(new Tile()); totalEverCreated++; }
         Collections.shuffle(tiles);
     }
     static int     getTotalEverCreated() { return totalEverCreated; }
@@ -136,30 +124,28 @@ class TileBag implements Serializable {
         for (int i=0;i<n&&!tiles.isEmpty();i++) d.add(tiles.remove(tiles.size()-1));
         return d;
     }
-    void returnTiles(List<Tile> t)       { tiles.addAll(t); Collections.shuffle(tiles); }
+    void returnTiles(List<Tile> t) { tiles.addAll(t); Collections.shuffle(tiles); }
 }
 
-// ── PLAYER (encapsulation, aggregation, method overloading, Scorable) ─────────
 class Player implements Serializable, Scorable {
-    private static int count = 0;                     // static – counts all players
+    private static int count = 0;
     private final int id; private final String name;
     private int score; private final List<Tile> rack = new ArrayList<>();
     Player(String n) { name=n; score=0; count++; id=count; }
-    static int    getCount()              { return count; }
-    int           getId()                 { return id; }
-    String        getName()               { return name; }
-    int           getScore()              { return score; }
-    List<Tile>    getRack()               { return rack; }
-    void addScore(int pts)                { score+=pts; }              // overloaded (W5)
-    void addScore(Scorable s)             { score+=s.getScoreValue(); }// overloaded (W5)
-    @Override public int getScoreValue()  { return score; }
-    void    addTilesToRack(List<Tile> t)  { rack.addAll(t); }
-    boolean removeFromRack(Tile t)        { return rack.remove(t); }   // overloaded
-    void    removeFromRack(List<Tile> t)  { rack.removeAll(t); }       // overloaded
-    @Override public String toString()    { return name+"("+score+")"; }
+    static int    getCount()             { return count; }
+    int           getId()                { return id; }
+    String        getName()              { return name; }
+    int           getScore()             { return score; }
+    List<Tile>    getRack()              { return rack; }
+    void addScore(int pts)               { score+=pts; }
+    void addScore(Scorable s)            { score+=s.getScoreValue(); }
+    @Override public int getScoreValue() { return score; }
+    void    addTilesToRack(List<Tile> t) { rack.addAll(t); }
+    boolean removeFromRack(Tile t)       { return rack.remove(t); }
+    void    removeFromRack(List<Tile> t) { rack.removeAll(t); }
+    @Override public String toString()   { return name+"("+score+")"; }
 }
 
-// ── GENERICS  (Week 12: generic class with bounded type parameter) ────────────
 class GameRecord<T extends Scorable> {
     private final String label; private final T item;
     GameRecord(String l, T i) { label=l; item=i; }
@@ -169,35 +155,31 @@ class GameRecord<T extends Scorable> {
     @Override public String toString() { return label+"["+getScore()+"]"; }
 }
 
-// ── CUSTOM COLLECTION  (Week 11: inventing new collections) ──────────────────
 class WordHistory implements Iterable<String> {
     private final LinkedList<String> list = new LinkedList<>();
-    void   add(String w)   { list.addFirst(w); }
-    int    size()          { return list.size(); }
-    String latest()        { return list.isEmpty()?"none":list.getFirst(); }
+    void   add(String w) { list.addFirst(w); }
+    int    size()        { return list.size(); }
+    String latest()      { return list.isEmpty()?"none":list.getFirst(); }
     @Override public Iterator<String> iterator() { return list.iterator(); }
 }
 
-// ── DICTIONARY  (Week 11: Set + Map) ─────────────────────────────────────────
 class Dictionary {
-    private final Set<String>         words  = new HashSet<>();   // O(1) lookup
-    private final Map<String,Integer> looked = new HashMap<>();   // lookup frequency (Map W11)
+    private final Set<String>         words  = new HashSet<>();
+    private final Map<String,Integer> looked = new HashMap<>();
     Dictionary() { loadWords(); }
     boolean isValidWord(String w) {
         w = w.toUpperCase();
-        looked.merge(w, 1, Integer::sum);                         // Map.merge lambda
+        looked.merge(w, 1, Integer::sum);
         return words.contains(w);
     }
-    int size()                          { return words.size(); }
-    Map<String,Integer> getLookupStats(){ return Collections.unmodifiableMap(looked); }
+    int size()                           { return words.size(); }
+    Map<String,Integer> getLookupStats() { return Collections.unmodifiableMap(looked); }
     private void loadWords() {
         String raw =
-            // 2-letter
             "AA AB AD AE AG AH AI AM AN AR AS AT AW AX AY BA BE BI BO BY DA DE DO ED EF EH EL " +
             "EM EN ER ES ET EX FA GO HA HE HI HM HO ID IF IN IS IT JO KA KI LA LI LO MA ME MI " +
             "MO MU MY NA NE NO NU OD OE OF OH OK OM ON OP OR OS OW OX OY PA PE PI QI RE SH SI " +
             "SO TA TI TO UH UM UN UP US UT WE WO XI XU YA YE YO ZA " +
-            // 3-letter
             "ACE ACT ADD ADO AGE AGO AID AIM AIR ALE ALL AMP AND ANT ANY APE ARC ARE ARK ARM ART " +
             "ASH ASK ATE AWE AWL AWN AXE AYE BAD BAG BAN BAR BAT BAY BED BEG BET BID BIG BIN BIT " +
             "BOA BOG BOW BOX BOY BUD BUG BUM BUN BUS BUT BUY BYE CAB CAN CAP CAR CAT CEE COB COD " +
@@ -219,7 +201,6 @@ class Dictionary {
             "TOW TOY TUB TUG TUM TUN URN USE VAN VAT VEE VET VIA VIE VIM VOW WAD WAG WAN WAR WAX " +
             "WAY WEB WED WET WHO WHY WIG WIN WIT WIZ WOE WOK YAK YAM YAP YAW YEA YES YET YEW YIN " +
             "YOU ZAP ZED ZEE ZOO " +
-            // 4-letter
             "ABLE ACHE ACID ACRE AGED AIDE AKIN ALOE ALTO AMID ANTE ANTI APEX ARCH AREA ARID ARMY " +
             "ARTS ATOM AUNT AUTO AVID AWAY AWRY BABE BABY BACK BAKE BALD BALE BALL BAND BANE BANG " +
             "BANK BARE BARN BASE BASH BASS BATH BEAD BEAK BEAM BEAN BEAR BEAT BEEF BEER BELL BELT " +
@@ -268,7 +249,6 @@ class Dictionary {
             "WAKE WANE WARD WARN WART WARY WATT WAVE WAXY WEAK WEAN WEED WELD WELL WELT WICK WIFE " +
             "WILD WILE WINE WING WINK WIRE WISE WISH WISP WOKE WOMB WOOL WORD WORE WORM WORN WRAP " +
             "WREN YAWN YEAR YELL YOGA YOKE YOUR ZEAL ZERO ZEST ZONE ZOOM " +
-            // 5-letter
             "ABBEY ABIDE ABORT ABUSE ACUTE ADMIT ADOPT ADULT AFTER AGILE AISLE ALARM ALBUM ALERT " +
             "ALIEN ALIKE ALIVE ALLOW ALONE ALONG ALTER AMAZE AMEND AMPLE ANGEL ANGER ANGLE ANGRY " +
             "ANVIL APART APRON ARENA ARGUE ARISE ARMOR AROMA AROSE ARRAY ARSON ASIDE ATLAS ATONE " +
@@ -311,7 +291,6 @@ class Dictionary {
             "UTTER VAGUE VALUE VALVE VAPOR VAULT VIDEO VIGOR VIRAL VIRUS VISIT VISTA VITAL VIVID " +
             "VOTER WAIST WATCH WATER WEAVE WEIGH WEIRD WHALE WHEAT WHEEL WHILE WHOLE WHOSE WIELD " +
             "WITCH WORLD WORRY WORST WORTH WOULD WOUND WRATH WRONG WROTE YACHT YEARN YOUNG ZEBRA " +
-            // 6-letter
             "ABSENT ACCEPT ACCESS ACTION ACTIVE ACTUAL AFFECT AFRAID AGENCY ALMOST ALWAYS AMOUNT " +
             "ANIMAL ANNUAL ANSWER APPEAL APPEAR AROUND ARRIVE ATTACK ATTEND AUTHOR AUTUMN BOTHER " +
             "BOTTLE BOTTOM BRANCH BREATH BRIDGE BRIGHT BROKEN BRONZE BUNDLE BUTTER CANCEL CANYON " +
@@ -340,7 +319,6 @@ class Dictionary {
     }
 }
 
-// ── WORD FINDER ───────────────────────────────────────────────────────────────
 class WordFinder {
     private final Board board;
     WordFinder(Board b) { board=b; }
@@ -364,7 +342,6 @@ class WordFinder {
     }
 }
 
-// ── SCORE CALCULATOR  (static nested class = inner class Week 14) ─────────────
 class ScoreCalculator {
     ScoreBreakdown calculate(List<Square> word, List<Square> newlyPlaced) {
         ScoreBreakdown bd=new ScoreBreakdown(); int wm=1, raw=0;
@@ -376,10 +353,10 @@ class ScoreCalculator {
         bd.setWordMult(wm); bd.setFinal(raw*wm); return bd;
     }
     int sumScores(List<ScoreBreakdown> bds) {
-        return bds.stream().mapToInt(ScoreBreakdown::getFinal).sum();  // lambda + method ref
+        return bds.stream().mapToInt(ScoreBreakdown::getFinal).sum();
     }
 
-    static class ScoreBreakdown {                                      // static nested class (W14)
+    static class ScoreBreakdown {
         private final StringBuilder detail=new StringBuilder();
         private int wm=1, total;
         void addLetter(char l, int p) { detail.append(l).append('(').append(p).append(')'); }
@@ -390,7 +367,6 @@ class ScoreCalculator {
     }
 }
 
-// ── GAME STATE  (Week 13: Serialization | final class Week 9) ────────────────
 final class GameState implements Serializable {
     private final Board board; private final List<Player> players;
     private final TileBag tileBag; private final int currentPlayerIndex;
@@ -401,7 +377,6 @@ final class GameState implements Serializable {
     int          getCurrentPlayerIndex() { return currentPlayerIndex; }
 }
 
-// ── MAIN GAME CONTROLLER / GUI ────────────────────────────────────────────────
 public class ScrabbleGame {
 
     private Board board; private TileBag tileBag; private Dictionary dictionary;
@@ -410,12 +385,10 @@ public class ScrabbleGame {
     private List<Square> pendingSquares = new ArrayList<>();
     private Tile selectedTile; private Button selectedRackBtn;
 
-    // new collections demonstrating Map + custom collection + generic list
-    private final Map<String,Integer>      wordsPlayed  = new HashMap<>();
-    private final WordHistory              wordHistory   = new WordHistory();
-    private final List<GameRecord<Player>> gameHistory   = new ArrayList<>();
+    private final Map<String,Integer>      wordsPlayed = new HashMap<>();
+    private final WordHistory              wordHistory  = new WordHistory();
+    private final List<GameRecord<Player>> gameHistory  = new ArrayList<>();
 
-    // GUI nodes
     private Button[][] boardBtns; private HBox rackBox;
     private Label statusLbl, turnLbl, tilesLbl;
     private Label[] scoreLbls;
@@ -447,8 +420,6 @@ public class ScrabbleGame {
 
     private Player cur() { return players.get(currentPlayerIndex); }
 
-    // ── GUI builders ─────────────────────────────────────────────────────────
-
     private VBox buildTop() {
         Label title=lbl("SmartScrabble",26,true,"#e8e8e8");
         turnLbl  = lbl("",16,true,"#5dd6c0");
@@ -464,7 +435,7 @@ public class ScrabbleGame {
             Button b=new Button(); b.setPrefSize(40,40);
             b.setFont(Font.font("Arial",FontWeight.BOLD,11));
             final int row=r, col=c;
-            b.setOnAction(e->onSquareClicked(row,col));   // lambda (W14)
+            b.setOnAction(e->onSquareClicked(row,col));
             boardBtns[r][c]=b; g.add(b,c,r);
         }
         return g;
@@ -474,10 +445,10 @@ public class ScrabbleGame {
         rackBox=new HBox(6); rackBox.setAlignment(Pos.CENTER); rackBox.setPadding(new Insets(8));
 
         Button submitBtn = new Button("Submit Word");
-        submitBtn.setOnAction(e -> onSubmitWord());            // lambda
+        submitBtn.setOnAction(e -> onSubmitWord());
 
         Button passBtn = new Button("Pass Turn");
-        passBtn.setOnAction(new EventHandler<ActionEvent>() { // anonymous inner class (W14)
+        passBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) { onPassTurn(); }
         });
 
@@ -507,12 +478,10 @@ public class ScrabbleGame {
         l.setTextFill(Color.web(hex)); return l;
     }
 
-    // ── Event handlers ────────────────────────────────────────────────────────
-
     private void onSquareClicked(int r, int c) {
         Square sq=board.getSquare(r,c);
-        if (!sq.isEmpty())       { status("That square is already occupied."); return; }
-        if (selectedTile==null)  { status("Select a rack tile first.");        return; }
+        if (!sq.isEmpty())      { status("That square is already occupied."); return; }
+        if (selectedTile==null) { status("Select a rack tile first.");        return; }
         sq.placeTile(selectedTile); pendingSquares.add(sq);
         cur().removeFromRack(selectedTile); selectedTile=null;
         if (selectedRackBtn!=null) { selectedRackBtn.getStyleClass().remove("rack-tile-selected"); selectedRackBtn=null; }
@@ -538,7 +507,6 @@ public class ScrabbleGame {
             int pts=scoreCalc.sumScores(bds);
             cur().addScore(pts);
 
-            // record to Map + custom collection + generic list (Week 11-12)
             for (List<Square> w:allWords) {
                 String ws=wordFinder.wordToString(w);
                 wordsPlayed.merge(ws,1,Integer::sum);
@@ -574,8 +542,8 @@ public class ScrabbleGame {
         cur().addTilesToRack(ret); pendingSquares.clear();
     }
 
-    private void onRecall()  { undoPlacement(); status("Tiles recalled."); refresh(); }
-    private void onPassTurn(){ undoPlacement(); status(cur().getName()+" passed."); advance(); refresh(); }
+    private void onRecall()   { undoPlacement(); status("Tiles recalled."); refresh(); }
+    private void onPassTurn() { undoPlacement(); status(cur().getName()+" passed."); advance(); refresh(); }
 
     private void refillAndAdvance() {
         int need=7-cur().getRack().size();
@@ -584,17 +552,15 @@ public class ScrabbleGame {
     }
     private void advance() { currentPlayerIndex=(currentPlayerIndex+1)%players.size(); }
 
-    // ── File I/O + Serialization + Exception handling (Weeks 10, 13) ─────────
-
     private void onSave() {
         ObjectOutputStream out=null;
         try {
             out=new ObjectOutputStream(new FileOutputStream("scrabble_save.dat"));
             out.writeObject(new GameState(board,players,tileBag,currentPlayerIndex));
-            status("Game saved to scrabble_save.dat");
+            status("Game saved.");
         } catch (IOException e) {
             status("Save failed: "+e.getMessage());
-        } finally {                                          // finally block (Week 10)
+        } finally {
             if (out!=null) try { out.close(); } catch (IOException ignored) {}
         }
     }
@@ -606,18 +572,18 @@ public class ScrabbleGame {
             tileBag=gs.getTileBag(); currentPlayerIndex=gs.getCurrentPlayerIndex();
             wordFinder=new WordFinder(board); pendingSquares.clear();
             status("Game loaded."); refresh();
-        } catch (IOException|ClassNotFoundException e) {     // multi-catch (Week 10)
+        } catch (IOException|ClassNotFoundException e) {
             status("Load failed: "+e.getMessage());
         }
     }
 
-    // ── Refresh ───────────────────────────────────────────────────────────────
-
     private void status(String m) { statusLbl.setText(m); }
 
-    private void refresh() { refreshBoard(); refreshRack(); refreshScores();
+    private void refresh() {
+        refreshBoard(); refreshRack(); refreshScores();
         turnLbl.setText("Turn: "+cur().getName());
-        tilesLbl.setText("Bag: "+tileBag.remaining()+" tiles | Words: "+wordHistory.size()); }
+        tilesLbl.setText("Bag: "+tileBag.remaining()+" tiles | Words: "+wordHistory.size());
+    }
 
     private void refreshBoard() {
         for (int r=0;r<Board.SIZE;r++) for (int c=0;c<Board.SIZE;c++) {
@@ -641,14 +607,14 @@ public class ScrabbleGame {
         for (Tile t:cur().getRack()) {
             Button b=new Button(t.getLetter()+" "+t.getValue());
             b.setPrefSize(50,50); b.getStyleClass().add("rack-tile");
-            b.setOnAction(e->onRackTileClicked(t,b));       // lambda captures t, b
+            b.setOnAction(e->onRackTileClicked(t,b));
             rackBox.getChildren().add(b);
         }
     }
 
     private void refreshScores() {
         List<Player> sorted=new ArrayList<>(players);
-        sorted.sort((a,b)->b.getScore()-a.getScore());      // lambda sort (Week 14)
+        sorted.sort((a,b)->b.getScore()-a.getScore());
         for (int i=0;i<sorted.size()&&i<scoreLbls.length;i++)
             scoreLbls[i].setText(sorted.get(i).getName()+": "+sorted.get(i).getScore());
     }
