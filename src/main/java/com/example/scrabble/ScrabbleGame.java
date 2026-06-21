@@ -392,8 +392,10 @@ public class ScrabbleGame {
     private Button[][] boardBtns; private HBox rackBox;
     private Label statusLbl, turnLbl, tilesLbl;
     private Label[] scoreLbls;
+    private Stage primaryStage;
 
     public void start(Stage stage) {
+        this.primaryStage = stage;
         initModel();
         BorderPane root = new BorderPane();
         root.getStyleClass().add("root-pane");
@@ -447,6 +449,9 @@ public class ScrabbleGame {
         Button submitBtn = new Button("Submit Word");
         submitBtn.setOnAction(e -> onSubmitWord());
 
+        Button closeBtn = new Button("Close Game");
+        closeBtn.setOnAction(e -> primaryStage.close());
+
         Button passBtn = new Button("Pass Turn");
         passBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) { onPassTurn(); }
@@ -456,7 +461,7 @@ public class ScrabbleGame {
         Button saveBtn  =new Button("Save");   saveBtn.setOnAction(e->onSave());
         Button loadBtn  =new Button("Load");   loadBtn.setOnAction(e->onLoad());
 
-        HBox ctrl=new HBox(8,submitBtn,passBtn,recallBtn,saveBtn,loadBtn);
+        HBox ctrl=new HBox(8,submitBtn,closeBtn,passBtn,recallBtn,saveBtn,loadBtn);
         ctrl.setAlignment(Pos.CENTER);
         Label rl=lbl("Your Rack:",13,false,"#e8e8e8");
         VBox v=new VBox(6,rl,rackBox,ctrl); v.setAlignment(Pos.CENTER); v.setPadding(new Insets(8,0,0,0));
